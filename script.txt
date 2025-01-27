@@ -1,0 +1,1 @@
+pyinstaller --onefile --noconsole --paths "D:\work\upwork\armstrong\env\Lib\site-packages" .\src\build.py
