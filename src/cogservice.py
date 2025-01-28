@@ -29,7 +29,7 @@ def extract_fields_from_invoice(file_path):
             "Vendor Name": "VendorAddressRecipient",
             "Customer Name": "CustomerAddressRecipient",
             "Date": "InvoiceDate",
-            "Project Name": "ProjectName", 
+            # "Project Name": "ProjectName", 
             "Total Value": "InvoiceTotal",
             "Invoice Number": "InvoiceId"
         }

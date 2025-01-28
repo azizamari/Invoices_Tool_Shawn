@@ -2,3 +2,5 @@ env/
 .env
 build/
 dist/
+*.spec
+*.pyc
