@@ -79,29 +79,34 @@ def extract_fields_from_invoice(file_path):
         print(f"An error occurred: {e.message}")
         return None
     
-
-def generate_invoice_excel(extracted_fields, invoice_path):
+def generate_invoice_excel(extracted_fields, invoice_path, save_dir="temp_uploads"):
     """
-    Generates an Excel file from extracted invoice data with styled headers and a clickable Invoice Path.
+    Generates an Excel file from extracted invoice data and saves it to disk.
 
     Args:
         extracted_fields (dict): Extracted invoice fields with values.
         invoice_path (str): Path to the original invoice file.
+        save_dir (str): Directory where the Excel file will be saved.
 
     Returns:
-        BytesIO: The in-memory Excel file for download.
+        str: Path to the saved Excel file.
     """
+    # Ensure the save directory exists
+    os.makedirs(save_dir, exist_ok=True)
+
     # Prepare data for the DataFrame
     data = {key: [details["value"]] for key, details in extracted_fields.items()}
-    # Store hyperlink-friendly invoice path
     data["Invoice Path"] = [f'=HYPERLINK("{invoice_path}", "Open Invoice")']
 
     # Create DataFrame
     df = pd.DataFrame(data)
 
-    # Save to an in-memory BytesIO object
-    excel_buffer = io.BytesIO()
-    with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
+    # Define file path
+    excel_filename = "extracted_invoice.xlsx"
+    excel_path = os.path.join(save_dir, excel_filename)
+
+    # Save to an Excel file
+    with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name="Invoice Data")
 
         # Access the workbook and sheet
@@ -124,10 +129,7 @@ def generate_invoice_excel(extracted_fields, invoice_path):
         invoice_path_col = list(df.columns).index("Invoice Path") + 1  # Get column index (1-based)
         sheet.cell(row=2, column=invoice_path_col).font = link_font  # Apply hyperlink style
 
-    # Move buffer position to the beginning
-    excel_buffer.seek(0)
-    
-    return excel_buffer
+    return excel_path  # Return the path of the saved file
 
 
 if __name__ == "__main__":

@@ -1,1 +1,1 @@
-pyinstaller --onefile --noconsole --paths "D:\work\upwork\armstrong\env\Lib\site-packages" .\src\build.py
+pyinstaller --onefile --noconsole --paths "D:\work\upwork\armstrong\env\Lib\site-packages" --name=invoice_extraction --icon=icon.ico .\src\build.py
