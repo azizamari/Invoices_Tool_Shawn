@@ -1,17 +1,18 @@
 import streamlit as st
 import uuid
 import os
-from cogservice import extract_fields_from_invoice
+import io
+from cogservice import extract_fields_from_invoice, generate_invoice_excel
 
 def save_uploaded_file(uploaded_file):
-    # Generate a temporary file path with a UUID name
+    """
+    Saves the uploaded file temporarily.
+    """
     temp_filename = f"{uuid.uuid4()}.pdf"
     temp_filepath = os.path.join("temp_uploads", temp_filename)
 
-    # Ensure the directory exists
     os.makedirs("temp_uploads", exist_ok=True)
 
-    # Save the file to the temporary path
     with open(temp_filepath, "wb") as f:
         f.write(uploaded_file.read())
     
@@ -36,20 +37,33 @@ def main():
     uploaded_file = st.file_uploader("Upload your invoice (PDF)", type=["pdf"])
     
     if uploaded_file is not None:
-        st.write("Processing your invoice...")  # Display while processing
+        st.write("Processing your invoice...")
 
-        # Save the uploaded file to disk
         try:
+            # Save file and process extraction
             temp_filepath = save_uploaded_file(uploaded_file)
-
-            # Process the saved file
             result_dict = extract_fields_from_invoice(temp_filepath)
 
-            # Display the result as a dictionary
-            st.subheader("Extracted Invoice Data")
-            st.json(result_dict)
+            if result_dict:
+                # Display extracted fields
+                # st.subheader("Extracted Invoice Data")
+                # st.json(result_dict)
 
-            # Clean up: Delete the temporary file after processing
+                # Generate Excel file for download
+                excel_file = generate_invoice_excel(result_dict, uploaded_file.name)
+                
+                # Provide a download button
+                st.download_button(
+                    label="Download Extracted Data as Excel",
+                    data=excel_file,
+                    file_name="extracted_invoice_data.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+
+            else:
+                st.error("No fields extracted.")
+
+            # Cleanup temp file
             os.remove(temp_filepath)
 
         except Exception as e:
