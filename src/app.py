@@ -108,13 +108,13 @@ def main():
                 st.success(f"File successfully uploaded: `{temp_filepath}`")
 
                 # Extract fields from invoice (only process once)
-                extracted_data = extract_fields_from_invoice(temp_filepath)
+                extracted_data, invoice_text= extract_fields_from_invoice(temp_filepath)
                 if extracted_data:
                     st.session_state.extracted_data = extracted_data
 
                     # Generate Excel and save path in state
                     temp_dir = get_temp_dir()
-                    excel_path = generate_invoice_excel(extracted_data, temp_filepath)
+                    excel_path = generate_invoice_excel(extracted_data, invoice_text, temp_filepath)
                     st.session_state.excel_file_path = excel_path
 
                     st.success(f"Excel file saved at: `{excel_path}`")

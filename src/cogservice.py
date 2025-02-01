@@ -11,10 +11,12 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.hyperlink import Hyperlink
+from config import settings
+from model import extract_invoice_details
 
-load_dotenv()
-endpoint = os.getenv("DOCUMENT_INTELLIGENCE_ENDPOINT")
-key = os.getenv("DOCUMENT_INTELLIGENCE_API_KEY")
+config = settings.get_settings()
+endpoint = config.document_intelligence.endpoint
+key = config.document_intelligence.api_key
 
 if not endpoint or not key:
     raise ValueError("DOCUMENTINTELLIGENCE_ENDPOINT and DOCUMENTINTELLIGENCE_API_KEY must be set in .env.")
@@ -37,6 +39,7 @@ def extract_fields_from_invoice(file_path):
             "Customer Name": "CustomerAddressRecipient",
             "Date": "InvoiceDate",
             # "Project Name": "ProjectName", 
+            "Job Name": "ShipToAddressRecipient",
             "Total Value": "InvoiceTotal",
             "Invoice Number": "InvoiceId"
         }
@@ -58,10 +61,16 @@ def extract_fields_from_invoice(file_path):
                     field = document.fields.get(model_field)
                     if field:
                         if model_field == "InvoiceTotal":
-                            extracted_data[field_name] = {
-                                "value": str(field.value_currency.amount) + " " + field.value_currency.currency_code,
-                                "confidence": field.confidence
-                            }
+                            if field.value_currency:
+                                extracted_data[field_name] = {
+                                    "value": str(field.value_currency.amount) + " " + field.value_currency.currency_code,
+                                    "confidence": field.confidence
+                                }
+                            else:
+                                extracted_data[field_name] = {
+                                    "value": field.value_string,
+                                    "confidence": field.confidence
+                                }
                         elif model_field == "InvoiceDate":
                             extracted_data[field_name] = {
                                 "value": field.value_date,
@@ -72,14 +81,15 @@ def extract_fields_from_invoice(file_path):
                                 "value": field.content,
                                 "confidence": field.confidence
                             }
-        
-        return extracted_data
+        invoice_text=result.content
+
+        return extracted_data,invoice_text
 
     except HttpResponseError as e:
         print(f"An error occurred: {e.message}")
         return None
     
-def generate_invoice_excel(extracted_fields, invoice_path, save_dir="temp_uploads"):
+def generate_invoice_excel(extracted_fields, invoice_text, invoice_path, save_dir="temp_uploads"):
     """
     Generates an Excel file from extracted invoice data and saves it to disk.
 
@@ -91,11 +101,16 @@ def generate_invoice_excel(extracted_fields, invoice_path, save_dir="temp_upload
     Returns:
         str: Path to the saved Excel file.
     """
+    
+    extra_fields=extract_invoice_details(invoice_text, extracted_fields)
+
     # Ensure the save directory exists
     os.makedirs(save_dir, exist_ok=True)
 
     # Prepare data for the DataFrame
     data = {key: [details["value"]] for key, details in extracted_fields.items()}
+    for key, value in extra_fields.items():
+        data[key] = [value]
     data["Invoice Path"] = [f'=HYPERLINK("{invoice_path}", "Open Invoice")']
 
     # Create DataFrame
@@ -133,7 +148,7 @@ def generate_invoice_excel(extracted_fields, invoice_path, save_dir="temp_upload
 
 
 if __name__ == "__main__":
-    invoice_file_path = r"D:\work\upwork\armstrong\FON-4245485-0002 ACB110.pdf"
+    invoice_file_path = r"D:\work\upwork\armstrong\invoices\INVOICE # 43353_240826_131415.pdf"
     # invoice_file_path = r"D:\work\upwork\armstrong\2168515 ACB110.pdf"
 
     if not os.path.exists(invoice_file_path):
@@ -141,7 +156,9 @@ if __name__ == "__main__":
 
     print(f"Analyzing invoice: {invoice_file_path}")
 
-    extracted_fields = extract_fields_from_invoice(invoice_file_path)
+    extracted_fields, invoice_text = extract_fields_from_invoice(invoice_file_path)
+
+    print(extract_invoice_details(invoice_text, extracted_fields))
 
     if extracted_fields:
         print("\nExtracted Fields:")
