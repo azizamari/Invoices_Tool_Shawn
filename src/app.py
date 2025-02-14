@@ -32,6 +32,8 @@ def check_and_prompt_env_vars():
         
         st.success("Environment variables saved. Please restart the app.")
         st.stop()
+    print(env_values)
+    return env_values
 
 def get_temp_dir():
     """Returns the correct temp directory, even when running as an .exe"""
@@ -65,7 +67,11 @@ def save_uploaded_file(uploaded_file):
         return None
 
 def main():
-    check_and_prompt_env_vars()
+    config = check_and_prompt_env_vars()
+    
+    if not all(config.values()):
+        st.error("All required environment variables must be set before uploading data.")
+        return
     
     st.title("Invoice Extraction Internal Tool")
     st.write("Select a processing mode below:")
@@ -79,9 +85,9 @@ def main():
         if uploaded_file:
             temp_filepath = save_uploaded_file(uploaded_file)
             if temp_filepath:
-                extracted_data, invoice_text = extract_fields_from_invoice(temp_filepath)
+                extracted_data, invoice_text = extract_fields_from_invoice(temp_filepath, config=config)
                 if extracted_data:
-                    excel_path = generate_invoice_excel(extracted_data, invoice_text, temp_filepath)
+                    excel_path = generate_invoice_excel(extracted_data, invoice_text, temp_filepath, config=config)
                     st.success(f"Excel file saved at: `{excel_path}`")
     
     else:  # Batch Invoices mode
@@ -91,8 +97,8 @@ def main():
         if uploaded_files:
             batch_file_paths = [save_uploaded_file(file) for file in uploaded_files if file]
             if batch_file_paths:
-                batch_results = batch_extract_fields_from_invoices(batch_file_paths, parallel=True)
-                batch_excel = generate_batch_invoices_excel(batch_results)
+                batch_results = batch_extract_fields_from_invoices(batch_file_paths, config=config, parallel=True)
+                batch_excel = generate_batch_invoices_excel(batch_results, config=config)
                 st.success(f"Batch processing complete. Excel file saved at: `{batch_excel}`")
 
 if __name__ == "__main__":

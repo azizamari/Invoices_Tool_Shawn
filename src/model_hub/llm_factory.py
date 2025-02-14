@@ -9,14 +9,16 @@ from .utils import model_dict
 
 
 class LLMFactory:
-    def __init__(self, provider: str):
+    def __init__(self, provider: str, config: Dict[str, str]):
         self.provider = provider
         self.settings = get_settings()
+        self.api_key = config['AZURE_API_KEY']
+        self.url = config['AZURE_URL']
         self.client = self._initialize_client()
 
     def _initialize_client(self) -> Any:
         client_initializers = {
-            'azure': lambda: instructor.from_openai(AzureOpenAI(api_key=self.settings.azure_api_key, base_url=self.settings.azure_url, api_version=self.settings.azure_api_version)),
+            'azure': lambda: instructor.from_openai(AzureOpenAI(api_key=self.api_key, base_url=self.url, api_version=self.settings.azure_api_version)),
         }
 
         initializer = client_initializers.get(self.provider)

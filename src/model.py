@@ -9,7 +9,7 @@ class InvoiceDetails(BaseModel):
 
 
 
-def extract_invoice_details(invoice_text: str, extracted_fields):
+def extract_invoice_details(invoice_text: str, extracted_fields, config=None):
     messages = [
         {"role": "system", "content": "You are an expert in extracting structured information from a contructions company's invoices with high accuracy."},
         {
@@ -24,7 +24,7 @@ def extract_invoice_details(invoice_text: str, extracted_fields):
             )
         }
     ]
-    llm = LLMFactory(provider="azure")
+    llm = LLMFactory("azure", config)
     completion = llm.create_completion(
         response_model=InvoiceDetails,
         messages=messages,
