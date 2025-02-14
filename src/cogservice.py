@@ -36,10 +36,10 @@ def extract_fields_from_invoice(file_path):
     try:
         fields_to_extract = {
             "Vendor Name": "VendorAddressRecipient",
-            "Customer Name": "CustomerAddressRecipient",
+            # "Customer Name": "CustomerAddressRecipient",
             "Date": "InvoiceDate",
             # "Project Name": "ProjectName", 
-            "Job Name": "ShipToAddressRecipient",
+            # "Job Name": "ShipToAddressRecipient",
             "Total Value": "InvoiceTotal",
             "Invoice Number": "InvoiceId"
         }

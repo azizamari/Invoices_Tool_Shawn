@@ -1,6 +1,5 @@
 from typing import Optional
 from pydantic_settings import BaseSettings
-from functools import lru_cache
 from dotenv import load_dotenv
 import os
 
@@ -21,9 +20,6 @@ class Settings(BaseSettings):
     azure_url: Optional[str] = None
     azure_api_version: Optional[str] = os.environ.get("AZURE_API_VERSION")
 
-# @lru_cache(maxsize=None)
 def get_settings() -> Settings:
-    """Function to get and cache settings.
-    The settings are cached to avoid repeated disk I/O.
-    """
+    """Function to get settings."""
     return Settings()
